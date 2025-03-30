@@ -36,13 +36,13 @@ export default function LoginPage() {
     }
   }
 
-  // Demo login function that bypasses authentication
+  // Update the handleDemoLogin function to use a more reliable navigation method
   const handleDemoLogin = () => {
     setIsLoading(true)
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false)
-      // Use window.location for a hard redirect to ensure it works
+      // Navigate to dashboard
       window.location.href = "/dashboard"
     }, 1000)
   }
