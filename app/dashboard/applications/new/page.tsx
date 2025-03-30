@@ -18,6 +18,62 @@ export default function NewApplicationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
+  // Form state to persist data between tabs
+  const [formData, setFormData] = useState({
+    // Business Info
+    legalBusinessName: "",
+    dba: "",
+    businessAddress: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    federalTaxId: "",
+    inceptionDate: "",
+    stateIncorporated: "",
+
+    // Funding Details
+    amountRequested: "",
+    timeframe: "",
+    useOfFunds: "",
+    monthlyRevenue: "",
+    creditScore: "",
+    existingFunding: "",
+
+    // Owner Info
+    ownerFirstName: "",
+    ownerLastName: "",
+    homeAddress: "",
+    ownerCity: "",
+    ownerState: "",
+    ownerZipCode: "",
+    dateOfBirth: "",
+    socialSecurity: "",
+    ownershipPercent: "",
+
+    // Contact Info
+    contactFirstName: "",
+    contactLastName: "",
+    email: "",
+    phone: "",
+  })
+
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }))
+  }
+
+  // Handle select changes
+  const handleSelectChange = (id: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }))
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -89,46 +145,98 @@ export default function NewApplicationPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="legalBusinessName">Legal Business Name *</Label>
-                      <Input id="legalBusinessName" required className="font-vectora-roman" />
+                      <Input
+                        id="legalBusinessName"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.legalBusinessName}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="dba">Doing Business As</Label>
-                      <Input id="dba" className="font-vectora-roman" />
+                      <Input
+                        id="dba"
+                        className="font-vectora-roman"
+                        value={formData.dba}
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="businessAddress">Physical Business Address *</Label>
-                    <Input id="businessAddress" required className="font-vectora-roman" />
+                    <Input
+                      id="businessAddress"
+                      required
+                      className="font-vectora-roman"
+                      value={formData.businessAddress}
+                      onChange={handleInputChange}
+                    />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">City *</Label>
-                      <Input id="city" required className="font-vectora-roman" />
+                      <Input
+                        id="city"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State *</Label>
-                      <Input id="state" required className="font-vectora-roman" />
+                      <Input
+                        id="state"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.state}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="zipCode">Zip Code *</Label>
-                      <Input id="zipCode" required className="font-vectora-roman" />
+                      <Input
+                        id="zipCode"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.zipCode}
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="federalTaxId">Federal Tax ID *</Label>
-                      <Input id="federalTaxId" placeholder="XX-XXXXXXX" required className="font-vectora-roman" />
+                      <Input
+                        id="federalTaxId"
+                        placeholder="XX-XXXXXXX"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.federalTaxId}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="inceptionDate">Inception Date *</Label>
-                      <Input id="inceptionDate" type="date" required className="font-vectora-roman" />
+                      <Input
+                        id="inceptionDate"
+                        type="date"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.inceptionDate}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="stateIncorporated">State Incorporated *</Label>
-                      <Select>
+                      <Select
+                        value={formData.stateIncorporated}
+                        onValueChange={(value) => handleSelectChange("stateIncorporated", value)}
+                      >
                         <SelectTrigger className="font-vectora-roman">
                           <SelectValue placeholder="Select state" />
                         </SelectTrigger>
@@ -200,11 +308,22 @@ export default function NewApplicationPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="amountRequested">Amount Requested *</Label>
-                      <Input id="amountRequested" type="number" min="5000" required className="font-vectora-roman" />
+                      <Input
+                        id="amountRequested"
+                        type="number"
+                        min="5000"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.amountRequested}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="timeframe">Timeframe for Funding *</Label>
-                      <Select>
+                      <Select
+                        value={formData.timeframe}
+                        onValueChange={(value) => handleSelectChange("timeframe", value)}
+                      >
                         <SelectTrigger className="font-vectora-roman">
                           <SelectValue placeholder="How quickly do you need the funds?" />
                         </SelectTrigger>
@@ -225,17 +344,30 @@ export default function NewApplicationPage() {
                       placeholder="Briefly explain what funding will be used for."
                       className="min-h-[100px] font-vectora-roman"
                       required
+                      value={formData.useOfFunds}
+                      onChange={handleInputChange}
                     />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="monthlyRevenue">Monthly Revenue *</Label>
-                      <Input id="monthlyRevenue" type="number" min="0" required className="font-vectora-roman" />
+                      <Input
+                        id="monthlyRevenue"
+                        type="number"
+                        min="0"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.monthlyRevenue}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="creditScore">Credit Score *</Label>
-                      <Select>
+                      <Select
+                        value={formData.creditScore}
+                        onValueChange={(value) => handleSelectChange("creditScore", value)}
+                      >
                         <SelectTrigger className="font-vectora-roman">
                           <SelectValue placeholder="Select credit range" />
                         </SelectTrigger>
@@ -250,7 +382,10 @@ export default function NewApplicationPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="existingFunding">Existing Funding *</Label>
-                      <Select>
+                      <Select
+                        value={formData.existingFunding}
+                        onValueChange={(value) => handleSelectChange("existingFunding", value)}
+                      >
                         <SelectTrigger className="font-vectora-roman">
                           <SelectValue placeholder="Select option" />
                         </SelectTrigger>
@@ -277,42 +412,92 @@ export default function NewApplicationPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="ownerFirstName">First Name *</Label>
-                      <Input id="ownerFirstName" required className="font-vectora-roman" />
+                      <Input
+                        id="ownerFirstName"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.ownerFirstName}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="ownerLastName">Last Name *</Label>
-                      <Input id="ownerLastName" required className="font-vectora-roman" />
+                      <Input
+                        id="ownerLastName"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.ownerLastName}
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="homeAddress">Home Address *</Label>
-                    <Input id="homeAddress" required className="font-vectora-roman" />
+                    <Input
+                      id="homeAddress"
+                      required
+                      className="font-vectora-roman"
+                      value={formData.homeAddress}
+                      onChange={handleInputChange}
+                    />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="ownerCity">City *</Label>
-                      <Input id="ownerCity" required className="font-vectora-roman" />
+                      <Input
+                        id="ownerCity"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.ownerCity}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="ownerState">State *</Label>
-                      <Input id="ownerState" required className="font-vectora-roman" />
+                      <Input
+                        id="ownerState"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.ownerState}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="ownerZipCode">Zip Code *</Label>
-                      <Input id="ownerZipCode" required className="font-vectora-roman" />
+                      <Input
+                        id="ownerZipCode"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.ownerZipCode}
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                      <Input id="dateOfBirth" type="date" required className="font-vectora-roman" />
+                      <Input
+                        id="dateOfBirth"
+                        type="date"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.dateOfBirth}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="socialSecurity">Social Security *</Label>
-                      <Input id="socialSecurity" placeholder="XXX-XX-XXXX" required className="font-vectora-roman" />
+                      <Input
+                        id="socialSecurity"
+                        placeholder="XXX-XX-XXXX"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.socialSecurity}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="ownershipPercent">Ownership Percent *</Label>
@@ -323,6 +508,8 @@ export default function NewApplicationPage() {
                         max="100"
                         required
                         className="font-vectora-roman"
+                        value={formData.ownershipPercent}
+                        onChange={handleInputChange}
                       />
                     </div>
                   </div>
@@ -339,22 +526,48 @@ export default function NewApplicationPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="contactFirstName">First Name *</Label>
-                      <Input id="contactFirstName" required className="font-vectora-roman" />
+                      <Input
+                        id="contactFirstName"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.contactFirstName}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="contactLastName">Last Name *</Label>
-                      <Input id="contactLastName" required className="font-vectora-roman" />
+                      <Input
+                        id="contactLastName"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.contactLastName}
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email *</Label>
-                      <Input id="email" type="email" required className="font-vectora-roman" />
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number *</Label>
-                      <Input id="phone" type="tel" required className="font-vectora-roman" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        required
+                        className="font-vectora-roman"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
                 </CardContent>
