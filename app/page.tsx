@@ -1,5 +1,9 @@
 "use client"
 
-export default function SyntheticV0PageForDeployment() {
-  return <div>Welcome to the new Capitalize Portal!</div>
+import { redirect } from "next/navigation"
+
+export default function Home() {
+  redirect("/login")
+  return null
 }
+
