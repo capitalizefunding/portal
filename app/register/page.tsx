@@ -13,7 +13,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox"
 import { AlertCircle, CheckCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -40,34 +39,15 @@ export default function RegisterPage() {
     }
 
     try {
-      // Register with Supabase
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            company_name: companyName,
-            phone: phone,
-          },
-        },
-      })
-
-      if (signUpError) throw signUpError
-
-      // Show success message instead of immediate redirect
+      // For demo purposes, just show success and redirect
       setSuccess(true)
 
-      // For demo purposes, we'll simulate a login after registration
-      // In a real app, you might want to verify email first
+      // Redirect to login page after showing success message
       setTimeout(() => {
-        // Redirect to login page after showing success message
         router.push("/login")
       }, 3000)
     } catch (err: any) {
       setError(err.message || "An error occurred during registration")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -103,7 +83,7 @@ export default function RegisterPage() {
                     Registration successful! Please check your email to verify your account.
                   </AlertDescription>
                 </Alert>
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="text-center text-sm text-muted-foreground font-vectora-roman">
                   You will be redirected to the login page in a few seconds...
                 </p>
               </div>
@@ -158,15 +138,21 @@ export default function RegisterPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox id="terms" required />
-                  <Label htmlFor="terms" className="text-sm">
+                  <Label htmlFor="terms" className="text-sm font-vectora-roman">
                     I agree to the{" "}
-                    <Link href="#" className="text-brand-green font-bold underline hover:text-brand-green/80">
+                    <button
+                      type="button"
+                      className="text-brand-green font-bold underline hover:text-brand-green/80 text-sm font-vectora-roman"
+                    >
                       Terms of Service
-                    </Link>{" "}
+                    </button>{" "}
                     and{" "}
-                    <Link href="#" className="text-brand-green font-bold underline hover:text-brand-green/80">
+                    <button
+                      type="button"
+                      className="text-brand-green font-bold underline hover:text-brand-green/80 text-sm font-vectora-roman"
+                    >
                       Privacy Policy
-                    </Link>
+                    </button>
                   </Label>
                 </div>
                 <Button
@@ -180,17 +166,21 @@ export default function RegisterPage() {
             )}
           </CardContent>
           <CardFooter className="flex flex-col">
-            <div className="mt-2 text-center text-sm">
+            <div className="mt-2 text-center text-sm font-vectora-roman">
               Already have an account?{" "}
-              <Link href="/login" className="text-brand-green font-bold underline hover:text-brand-green/80">
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="text-brand-green font-bold underline hover:text-brand-green/80 text-sm font-vectora-roman"
+              >
                 Sign in
-              </Link>
+              </button>
             </div>
           </CardFooter>
         </Card>
       </main>
       <footer className="border-t py-4 bg-gray-50">
-        <div className="container flex justify-center text-center text-sm text-gray-500">
+        <div className="container flex justify-center text-center text-sm text-gray-500 font-vectora-roman">
           © 2025 Capitalize Funding. All rights reserved.
         </div>
       </footer>
