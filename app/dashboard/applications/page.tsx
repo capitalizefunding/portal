@@ -29,7 +29,7 @@ export default function ApplicationsPage() {
                 <input
                   type="search"
                   placeholder="Search applications..."
-                  className="rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm"
+                  className="rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm font-vectora-roman"
                 />
               </div>
               <Button variant="outline" size="sm">
@@ -156,7 +156,7 @@ export default function ApplicationsPage() {
           </div>
 
           <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">Showing 5 of 24 applications</div>
+            <div className="text-sm text-muted-foreground font-vectora-roman">Showing 5 of 24 applications</div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" disabled>
                 Previous
