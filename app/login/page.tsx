@@ -35,13 +35,25 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      // Redirect to dashboard after successful login
+      // For demo purposes, we'll just redirect to dashboard
+      // In a real app, you might want to fetch user data first
       router.push("/dashboard")
     } catch (err: any) {
+      console.error("Login error:", err)
       setError(err.message || "Invalid email or password. Please try again.")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // For demo purposes, let's add a function to bypass login
+  const handleDemoLogin = () => {
+    setIsLoading(true)
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false)
+      router.push("/dashboard")
+    }, 1000)
   }
 
   return (
@@ -103,6 +115,17 @@ export default function LoginPage() {
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
+
+              {/* Demo login button for testing */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  className="text-brand-green font-bold underline hover:text-brand-green/80 text-sm"
+                >
+                  Demo Login (Skip Authentication)
+                </button>
+              </div>
             </form>
           </CardContent>
           <CardFooter className="flex flex-col">
