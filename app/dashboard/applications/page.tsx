@@ -1,174 +1,116 @@
-import Link from "next/link"
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, CheckCircle, Clock, AlertCircle, Search, Filter } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function ApplicationsPage() {
+export default function NewApplicationPage() {
+  const router = useRouter()
+  const [formData, setFormData] = useState({
+    legal_business_name: "",
+    doing_business_as: "",
+    business_address: "",
+    city: "",
+    state: "",
+    zip_code: "",
+    inception_date: "",
+    federal_tax_id: "",
+    state_of_incorporation: "",
+    amount_requested: "",
+    monthly_revenue: "",
+    annual_revenue: "",
+    use_of_funds: "",
+    timeframe_to_fund: "",
+    credit_score: "",
+    existing_funding: "",
+    first_name: "",
+    last_name: "",
+    phone_number: "",
+    email_address: "",
+    home_address: "",
+    home_city: "",
+    home_state: "",
+    home_zip_code: "",
+    date_of_birth: "",
+    social_security: "",
+    ownership_percentage: "",
+  })
+
+  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      setError("Unable to get user. Please log in again.")
+      setIsLoading(false)
+      return
+    }
+
+    const { error: insertError } = await supabase.from("applications").insert([
+      {
+        ...formData,
+        submitted_by: user.id,
+      },
+    ])
+
+    if (insertError) {
+      setError(insertError.message)
+    } else {
+      router.push("/applications")
+    }
+
+    setIsLoading(false)
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-vectora-bold tracking-tight">Applications</h2>
-          <p className="text-muted-foreground font-vectora-roman">Manage your client applications</p>
-        </div>
-        <Link href="/dashboard/applications/new">
-          <Button className="bg-brand-button text-black hover:bg-brand-button/90 rounded-brand">
-            <FileText className="mr-2 h-4 w-4" />
-            New Application
-          </Button>
-        </Link>
-      </div>
-
-      <Card>
+    <div className="flex justify-center p-8">
+      <Card className="w-full max-w-3xl">
         <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle>All Applications</CardTitle>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="search"
-                  placeholder="Search applications..."
-                  className="rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm"
+          <CardTitle className="text-2xl font-vectora-bold">New Application</CardTitle>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.keys(formData).map((key) => (
+              <div key={key}>
+                <Label htmlFor={key}>{key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</Label>
+                <Input
+                  id={key}
+                  name={key}
+                  value={(formData as any)[key]}
+                  onChange={handleChange}
+                  required
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-5 text-sm font-medium text-muted-foreground">
-              <div>Client</div>
-              <div>Date</div>
-              <div>Amount</div>
-              <div>Status</div>
-              <div className="text-right">Actions</div>
-            </div>
-
-            <div className="grid grid-cols-5 items-center gap-4 text-sm border-b pb-4">
-              <div>
-                <div className="font-medium">Acme Corp</div>
-                <div className="text-xs text-muted-foreground">Business Expansion</div>
-              </div>
-              <div>Mar 24, 2025</div>
-              <div>$75,000</div>
-              <div className="flex items-center gap-1 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span>Approved</span>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Link href="/dashboard/applications/view">
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-5 items-center gap-4 text-sm border-b pb-4">
-              <div>
-                <div className="font-medium">Globex Inc</div>
-                <div className="text-xs text-muted-foreground">Equipment Financing</div>
-              </div>
-              <div>Mar 22, 2025</div>
-              <div>$125,000</div>
-              <div className="flex items-center gap-1 text-amber-600">
-                <Clock className="h-4 w-4" />
-                <span>In Review</span>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Link href="/dashboard/applications/view">
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-5 items-center gap-4 text-sm border-b pb-4">
-              <div>
-                <div className="font-medium">Stark Industries</div>
-                <div className="text-xs text-muted-foreground">Working Capital</div>
-              </div>
-              <div>Mar 20, 2025</div>
-              <div>$50,000</div>
-              <div className="flex items-center gap-1 text-red-600">
-                <AlertCircle className="h-4 w-4" />
-                <span>Needs Info</span>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Link href="/dashboard/applications/view">
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </Link>
-                <Link href="/dashboard/applications/edit">
-                  <Button variant="outline" size="sm">
-                    Edit
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-5 items-center gap-4 text-sm border-b pb-4">
-              <div>
-                <div className="font-medium">Wayne Enterprises</div>
-                <div className="text-xs text-muted-foreground">Real Estate</div>
-              </div>
-              <div>Mar 18, 2025</div>
-              <div>$200,000</div>
-              <div className="flex items-center gap-1 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span>Approved</span>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Link href="/dashboard/applications/view">
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-5 items-center gap-4 text-sm">
-              <div>
-                <div className="font-medium">Umbrella Corp</div>
-                <div className="text-xs text-muted-foreground">Inventory Financing</div>
-              </div>
-              <div>Mar 15, 2025</div>
-              <div>$85,000</div>
-              <div className="flex items-center gap-1 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span>Approved</span>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Link href="/dashboard/applications/view">
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">Showing 5 of 24 applications</div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
-            </div>
-          </div>
-        </CardContent>
+            ))}
+          </CardContent>
+          <CardFooter className="justify-end">
+            <Button
+              type="submit"
+              className="bg-brand-button text-black hover:bg-brand-button/90 rounded-brand"
+              disabled={isLoading}
+            >
+              {isLoading ? "Submitting..." : "Submit Application"}
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   )
 }
-
