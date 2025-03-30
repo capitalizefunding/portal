@@ -1,5 +1,5 @@
 "use client"
 
 export default function SyntheticV0PageForDeployment() {
-  return < />
+  return <div>Welcome to the new Capitalize Portal!</div>
 }
