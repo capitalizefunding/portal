@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { supabase } from "@/lib/supabase" // Import Supabase client here
+import { supabase } from "@/lib/supabase"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -49,7 +49,7 @@ export default function LoginPage() {
       <header className="border-b">
         <div className="container flex h-16 items-center px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Capitalize Funding" width={180} height={60} className="h-12 w-auto" priority />
+            <Image src="/logo.png" alt="Capitalize Funding" width={60} height={60} className="h-12 w-auto" priority />
           </Link>
         </div>
       </header>
@@ -81,7 +81,10 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-brand-green hover:underline">
+                  <Link
+                    href="/forgot-password"
+                    className="text-brand-green font-bold underline hover:text-brand-green/80"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -105,7 +108,7 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col">
             <div className="mt-2 text-center text-sm">
               Don&apos;t have a partner account?{" "}
-              <Link href="/register" className="text-brand-green hover:underline">
+              <Link href="/register" className="text-brand-green font-bold underline hover:text-brand-green/80">
                 Register now
               </Link>
             </div>
