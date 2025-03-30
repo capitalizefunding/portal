@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle, AlertCircle } from "lucide-react"
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { saveApplication, supabase } from "@/lib/supabase"
+import { saveApplication, supabase, testSupabaseConnection } from "@/lib/supabase"
 
 export default function SimpleApplicationForm() {
   const router = useRouter()
@@ -17,11 +17,40 @@ export default function SimpleApplicationForm() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
   const [debugInfo, setDebugInfo] = useState("")
+  const [connectionStatus, setConnectionStatus] = useState<"unknown" | "testing" | "success" | "error">("unknown")
+  const [connectionError, setConnectionError] = useState("")
 
   // Simplified form with just a few fields
   const [businessName, setBusinessName] = useState("")
   const [amount, setAmount] = useState("")
   const [purpose, setPurpose] = useState("")
+
+  // Test Supabase connection on component mount
+  useEffect(() => {
+    testConnection()
+  }, [])
+
+  const testConnection = async () => {
+    setConnectionStatus("testing")
+    setDebugInfo("Testing Supabase connection...")
+
+    try {
+      const { success, error, data } = await testSupabaseConnection()
+
+      if (success) {
+        setConnectionStatus("success")
+        setDebugInfo((prev) => prev + "\nConnection successful: " + JSON.stringify(data))
+      } else {
+        setConnectionStatus("error")
+        setConnectionError(error?.message || "Unknown error")
+        setDebugInfo((prev) => prev + "\nConnection failed: " + JSON.stringify(error))
+      }
+    } catch (err) {
+      setConnectionStatus("error")
+      setConnectionError(err.message || "Unknown error")
+      setDebugInfo((prev) => prev + "\nConnection test exception: " + err.message)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -80,12 +109,13 @@ export default function SimpleApplicationForm() {
         if (error) {
           setDebugInfo((prev) => prev + "\nSupabase error: " + JSON.stringify(error))
           console.error("Supabase save error:", error)
+          // Don't throw here, we'll continue with the form submission
         } else {
           setDebugInfo((prev) => prev + "\nSaved to Supabase successfully: " + JSON.stringify(data))
         }
       } catch (supabaseError) {
-        setDebugInfo((prev) => prev + "\nError with Supabase: " + supabaseError.message)
-        console.error("Supabase error:", supabaseError)
+        setDebugInfo((prev) => prev + "\nException with Supabase: " + supabaseError.message)
+        console.error("Supabase exception:", supabaseError)
         // Continue with the form submission even if Supabase fails
       }
 
@@ -117,6 +147,47 @@ export default function SimpleApplicationForm() {
         <h2 className="text-2xl font-vectora-bold tracking-tight">Simple Application Form</h2>
         <p className="text-muted-foreground font-vectora-roman">Submit a simplified funding application</p>
       </div>
+
+      {/* Connection Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Supabase Connection Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            {connectionStatus === "testing" && (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin text-brand-green" />
+                <span>Testing connection...</span>
+              </>
+            )}
+            {connectionStatus === "success" && (
+              <>
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="text-green-600">Connected to Supabase</span>
+              </>
+            )}
+            {connectionStatus === "error" && (
+              <>
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <span className="text-red-600">Connection error: {connectionError}</span>
+              </>
+            )}
+            {connectionStatus === "unknown" && <span>Connection status unknown</span>}
+          </div>
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={testConnection}
+              disabled={connectionStatus === "testing"}
+            >
+              Test Connection
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {success ? (
         <Card>

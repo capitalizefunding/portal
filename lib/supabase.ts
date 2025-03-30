@@ -8,46 +8,15 @@ const supabaseKey =
 // Create the Supabase client
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Function to inspect the actual schema of the applications table
-export const inspectApplicationsTable = async () => {
-  try {
-    // First check if the table exists
-    const { data, error } = await supabase.from("applications").select("count").limit(1)
-
-    if (error && error.message.includes("does not exist")) {
-      return { exists: false, columns: [], error: null }
-    }
-
-    // If we get here, the table exists
-    // We'll use a simpler approach instead of querying information_schema
-    return {
-      exists: true,
-      columns: [
-        // We'll assume these columns exist based on previous errors
-        { column_name: "business_name", data_type: "text" },
-        { column_name: "amountrequested", data_type: "numeric" },
-        { column_name: "purpose", data_type: "text" },
-        { column_name: "status", data_type: "text" },
-        { column_name: "created_at", data_type: "timestamp with time zone" },
-      ],
-      error: null,
-    }
-  } catch (error) {
-    console.error("Error inspecting applications table:", error)
-    return { exists: false, columns: [], error }
-  }
-}
-
-// Function to save application data to Supabase with flexible column mapping
+// Function to save application data to Supabase with detailed logging
 export const saveApplication = async (applicationData: any) => {
   try {
-    console.log("Attempting to save application data to Supabase:", applicationData)
+    console.log("Starting saveApplication with data:", applicationData)
 
     // For demo purposes, we'll use a fixed user ID
     const userId = "demo-user-id"
 
     // Create a properly formatted application object
-    // Using the column names we know exist in the database
     const applicationToSave = {
       business_name: applicationData.businessName,
       amountrequested: applicationData.amount,
@@ -57,10 +26,13 @@ export const saveApplication = async (applicationData: any) => {
       created_at: new Date().toISOString(),
     }
 
-    console.log("Saving application with fields:", Object.keys(applicationToSave))
+    console.log("Formatted application data:", applicationToSave)
 
     // First, check if the applications table exists
-    const { error: tableCheckError } = await supabase.from("applications").select("count").limit(1)
+    console.log("Checking if applications table exists...")
+    const { data: tableCheck, error: tableCheckError } = await supabase.from("applications").select("count").limit(1)
+
+    console.log("Table check result:", tableCheck, tableCheckError)
 
     // If the table doesn't exist, try to create it
     if (tableCheckError && tableCheckError.message.includes("does not exist")) {
@@ -68,7 +40,7 @@ export const saveApplication = async (applicationData: any) => {
 
       // Try to create the table
       try {
-        const { error: createError } = await supabase.query(`
+        const { data: createData, error: createError } = await supabase.query(`
           CREATE TABLE IF NOT EXISTS applications (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             business_name TEXT NOT NULL,
@@ -81,18 +53,23 @@ export const saveApplication = async (applicationData: any) => {
           );
         `)
 
+        console.log("Create table result:", createData, createError)
+
         if (createError) {
           console.error("Error creating table:", createError)
         } else {
           console.log("Table created successfully")
         }
       } catch (createErr) {
-        console.error("Error creating applications table:", createErr)
+        console.error("Exception creating applications table:", createErr)
       }
     }
 
     // Now try to insert the data
+    console.log("Attempting to insert application data...")
     const { data, error } = await supabase.from("applications").insert([applicationToSave]).select()
+
+    console.log("Insert result:", data, error)
 
     if (error) {
       console.error("Supabase insert error:", error)
@@ -102,8 +79,29 @@ export const saveApplication = async (applicationData: any) => {
     console.log("Application saved successfully to Supabase:", data)
     return { data, error: null }
   } catch (error: any) {
-    console.error("Error saving application to Supabase:", error)
+    console.error("Exception in saveApplication:", error)
     return { data: null, error }
+  }
+}
+
+// Function to test Supabase connection
+export const testSupabaseConnection = async () => {
+  try {
+    console.log("Testing Supabase connection...")
+
+    // Try a simple query to test the connection
+    const { data, error } = await supabase.from("applications").select("count")
+
+    if (error) {
+      console.error("Supabase connection test error:", error)
+      return { success: false, error }
+    }
+
+    console.log("Supabase connection successful:", data)
+    return { success: true, data }
+  } catch (error) {
+    console.error("Exception testing Supabase connection:", error)
+    return { success: false, error }
   }
 }
 
