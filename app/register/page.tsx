@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,13 +40,17 @@ export default function RegisterPage() {
     }
 
     try {
-      // For demo purposes, just show success and redirect
-      setSuccess(true)
-
-      // Redirect to login page after showing success message
+      // Simulate API call and email sending
       setTimeout(() => {
-        router.push("/login")
-      }, 3000)
+        setIsLoading(false)
+        setEmailSent(true)
+        setSuccess(true)
+
+        // Redirect to login page after showing success message
+        setTimeout(() => {
+          router.push("/login")
+        }, 5000)
+      }, 1500)
     } catch (err: any) {
       setError(err.message || "An error occurred during registration")
       setIsLoading(false)
@@ -80,9 +85,19 @@ export default function RegisterPage() {
                 <Alert className="bg-green-50 text-green-600 border-green-200">
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Registration successful! Please check your email to verify your account.
+                    Registration successful! {emailSent ? "A verification email has been sent to " + email : ""}
                   </AlertDescription>
                 </Alert>
+                {emailSent && (
+                  <div className="p-4 bg-gray-50 rounded-md">
+                    <h4 className="font-vectora-bold mb-2">Next Steps:</h4>
+                    <ol className="list-decimal pl-5 space-y-1 text-sm font-vectora-roman">
+                      <li>Check your email inbox for a verification message</li>
+                      <li>Click the verification link in the email</li>
+                      <li>Return to the login page to access your account</li>
+                    </ol>
+                  </div>
+                )}
                 <p className="text-center text-sm text-muted-foreground font-vectora-roman">
                   You will be redirected to the login page in a few seconds...
                 </p>
