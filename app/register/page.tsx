@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { AlertCircle, CheckCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabase } from "@/lib/supabase"
 
 export default function RegisterPage() {
@@ -24,6 +26,7 @@ export default function RegisterPage() {
   const [companyName, setCompanyName] = useState("")
   const [phone, setPhone] = useState("")
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,8 +56,15 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError
 
-      // Redirect to dashboard after successful registration
-      router.push("/dashboard")
+      // Show success message instead of immediate redirect
+      setSuccess(true)
+
+      // For demo purposes, we'll simulate a login after registration
+      // In a real app, you might want to verify email first
+      setTimeout(() => {
+        // Redirect to login page after showing success message
+        router.push("/login")
+      }, 3000)
     } catch (err: any) {
       setError(err.message || "An error occurred during registration")
     } finally {
@@ -78,71 +88,96 @@ export default function RegisterPage() {
             <CardDescription>Create an account to start submitting funding applications</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && <div className="text-red-500 text-sm">{error}</div>}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success ? (
+              <div className="space-y-4">
+                <Alert className="bg-green-50 text-green-600 border-green-200">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Registration successful! Please check your email to verify your account.
+                  </AlertDescription>
+                </Alert>
+                <p className="text-center text-sm text-muted-foreground">
+                  You will be redirected to the login page in a few seconds...
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                  />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
-                <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="terms" required />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the{" "}
-                  <Link href="#" className="text-brand-green font-bold underline hover:text-brand-green/80">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link href="#" className="text-brand-green font-bold underline hover:text-brand-green/80">
-                    Privacy Policy
-                  </Link>
-                </Label>
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-brand-button text-black hover:bg-brand-button/90 rounded-brand"
-                disabled={isLoading}
-              >
-                {isLoading ? "Creating Account..." : "Create Account"}
-              </Button>
-            </form>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="terms" required />
+                  <Label htmlFor="terms" className="text-sm">
+                    I agree to the{" "}
+                    <Link href="#" className="text-brand-green font-bold underline hover:text-brand-green/80">
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="#" className="text-brand-green font-bold underline hover:text-brand-green/80">
+                      Privacy Policy
+                    </Link>
+                  </Label>
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-brand-button text-black hover:bg-brand-button/90 rounded-brand"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating Account..." : "Create Account"}
+                </Button>
+              </form>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col">
             <div className="mt-2 text-center text-sm">
