@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { saveApplication, supabase, testSupabaseConnection } from "@/lib/supabase"
+import { supabase, testSupabaseConnection } from "@/lib/supabase"
 
 export default function SimpleApplicationForm() {
   const router = useRouter()
@@ -19,15 +19,23 @@ export default function SimpleApplicationForm() {
   const [debugInfo, setDebugInfo] = useState("")
   const [connectionStatus, setConnectionStatus] = useState<"unknown" | "testing" | "success" | "error">("unknown")
   const [connectionError, setConnectionError] = useState("")
+  const [columns, setColumns] = useState<string[]>([])
 
-  // Simplified form with just a few fields
+  // Update the form state and handleSubmit function to use the correct column names
+
+  // Add more form fields to match the table structure
   const [businessName, setBusinessName] = useState("")
   const [amount, setAmount] = useState("")
   const [purpose, setPurpose] = useState("")
+  const [contactFirstName, setContactFirstName] = useState("")
+  const [contactLastName, setContactLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
 
   // Test Supabase connection on component mount
   useEffect(() => {
     testConnection()
+    getTableColumns()
   }, [])
 
   const testConnection = async () => {
@@ -52,6 +60,55 @@ export default function SimpleApplicationForm() {
     }
   }
 
+  const getTableColumns = async () => {
+    setDebugInfo((prev) => prev + "\nGetting table columns...")
+
+    try {
+      // Try to get a sample row to determine columns
+      const { data, error } = await supabase.from("applications").select("*").limit(1)
+
+      if (error) {
+        setDebugInfo((prev) => prev + "\nError getting sample row: " + JSON.stringify(error))
+        return
+      }
+
+      if (data && data.length > 0) {
+        const foundColumns = Object.keys(data[0])
+        setColumns(foundColumns)
+        setDebugInfo((prev) => prev + "\nFound columns: " + foundColumns.join(", "))
+      } else {
+        setDebugInfo((prev) => prev + "\nTable exists but is empty, trying SQL approach")
+
+        // Try SQL approach
+        try {
+          const { data: columnData, error: columnError } = await supabase.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+            AND table_name = 'applications';
+          `)
+
+          if (columnError) {
+            setDebugInfo((prev) => prev + "\nError getting column info: " + JSON.stringify(columnError))
+            return
+          }
+
+          if (columnData && columnData.length > 0) {
+            const foundColumns = columnData.map((col) => col.column_name)
+            setColumns(foundColumns)
+            setDebugInfo((prev) => prev + "\nFound columns via SQL: " + foundColumns.join(", "))
+          } else {
+            setDebugInfo((prev) => prev + "\nNo columns found via SQL")
+          }
+        } catch (sqlErr) {
+          setDebugInfo((prev) => prev + "\nException in SQL query: " + sqlErr.message)
+        }
+      }
+    } catch (err) {
+      setDebugInfo((prev) => prev + "\nException getting columns: " + err.message)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setDebugInfo("Form submission started")
@@ -59,27 +116,21 @@ export default function SimpleApplicationForm() {
     setError("")
 
     try {
-      // Log form data
-      const formData = {
-        businessName: businessName,
-        amount: amount,
-        purpose: purpose,
-      }
-
-      setDebugInfo((prev) => prev + "\nForm data: " + JSON.stringify(formData))
-      console.log("Form data:", formData)
-
       // Create a simple application object for localStorage
       const newApplication = {
         id: Date.now().toString(),
         legalBusinessName: businessName,
         amountRequested: amount,
         useOfFunds: purpose,
+        contactFirstName: contactFirstName,
+        contactLastName: contactLastName,
+        email: email,
+        phone: phone,
         created_at: new Date().toISOString(),
         status: "pending",
       }
 
-      setDebugInfo((prev) => prev + "\nCreated application object")
+      setDebugInfo("Created application object for localStorage")
 
       // Try to store in localStorage
       try {
@@ -89,38 +140,43 @@ export default function SimpleApplicationForm() {
         setDebugInfo((prev) => prev + "\nSaved to localStorage successfully")
       } catch (storageError) {
         setDebugInfo((prev) => prev + "\nError saving to localStorage: " + storageError.message)
-        console.error("localStorage error:", storageError)
       }
 
-      // Try to save to Supabase
+      // Try to save to Supabase using a direct approach
       setDebugInfo((prev) => prev + "\nAttempting to save to Supabase...")
-      try {
-        // Check if Supabase is initialized
-        if (!supabase) {
-          throw new Error("Supabase client is not initialized")
-        }
 
-        // Log Supabase connection info (without sensitive data)
-        setDebugInfo((prev) => prev + "\nSupabase client initialized")
+      // Create a properly formatted application object for Supabase with the correct column names
+      const applicationToSave = {
+        // Business Info
+        legalBusinessName: businessName,
 
-        // Try to save to Supabase
-        const { data, error } = await saveApplication(formData)
+        // Funding Details
+        amountRequested: amount,
+        useOfFunds: purpose,
 
-        if (error) {
-          setDebugInfo((prev) => prev + "\nSupabase error: " + JSON.stringify(error))
-          console.error("Supabase save error:", error)
-          // Don't throw here, we'll continue with the form submission
-        } else {
-          setDebugInfo((prev) => prev + "\nSaved to Supabase successfully: " + JSON.stringify(data))
-        }
-      } catch (supabaseError) {
-        setDebugInfo((prev) => prev + "\nException with Supabase: " + supabaseError.message)
-        console.error("Supabase exception:", supabaseError)
-        // Continue with the form submission even if Supabase fails
+        // Contact Info
+        contactFirstName: contactFirstName || "Demo",
+        contactLastName: contactLastName || "User",
+        email: email || "demo@example.com",
+        phone: phone || "555-123-4567",
+
+        // Add timestamp
+        created_at: new Date().toISOString(),
+      }
+
+      setDebugInfo((prev) => prev + "\nFormatted data for Supabase: " + JSON.stringify(applicationToSave))
+
+      // Try direct insert
+      const { data, error } = await supabase.from("applications").insert([applicationToSave]).select()
+
+      if (error) {
+        setDebugInfo((prev) => prev + "\nSupabase error: " + JSON.stringify(error))
+        console.error("Supabase save error:", error)
+      } else {
+        setDebugInfo((prev) => prev + "\nSaved to Supabase successfully: " + JSON.stringify(data))
       }
 
       // Simulate API delay
-      setDebugInfo((prev) => prev + "\nWaiting 1 second...")
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       setIsSubmitting(false)
@@ -128,7 +184,6 @@ export default function SimpleApplicationForm() {
       setDebugInfo((prev) => prev + "\nForm submission successful")
 
       // Redirect after showing success message
-      setDebugInfo((prev) => prev + "\nWill redirect in 2 seconds...")
       setTimeout(() => {
         router.push("/dashboard/applications")
       }, 2000)
@@ -186,6 +241,17 @@ export default function SimpleApplicationForm() {
               Test Connection
             </Button>
           </div>
+
+          {columns.length > 0 && (
+            <div className="mt-4">
+              <p className="font-medium">Available Columns:</p>
+              <ul className="list-disc pl-5">
+                {columns.map((col, index) => (
+                  <li key={index}>{col}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -227,19 +293,46 @@ export default function SimpleApplicationForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount Requested ($)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="1000"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                />
+                <Input id="amount" type="text" value={amount} onChange={(e) => setAmount(e.target.value)} required />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="purpose">Purpose of Funding</Label>
                 <Textarea id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contactFirstName">First Name</Label>
+                  <Input
+                    id="contactFirstName"
+                    value={contactFirstName}
+                    onChange={(e) => setContactFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactLastName">Last Name</Label>
+                  <Input
+                    id="contactLastName"
+                    value={contactLastName}
+                    onChange={(e) => setContactLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
             </CardContent>
           </Card>

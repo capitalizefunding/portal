@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, CheckCircle, Clock, AlertCircle, Loader2 } from "lucide-react"
-import { getApplications, supabase } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState([])
@@ -46,7 +46,10 @@ export default function ApplicationsPage() {
         setDebugInfo((prev) => prev + `\nSupabase client initialized`)
 
         // Fetch applications from Supabase
-        const { data, error } = await getApplications()
+        const { data, error } = await supabase
+          .from("applications")
+          .select("*")
+          .order("created_at", { ascending: false })
 
         if (error) {
           setDebugInfo((prev) => prev + `\nSupabase error: ${JSON.stringify(error)}`)
@@ -181,9 +184,7 @@ export default function ApplicationsPage() {
               {applications.map((app) => (
                 <div key={app.id} className="grid grid-cols-5 items-center gap-4 text-sm border-b pb-4">
                   <div>
-                    <div className="font-medium">
-                      {app.legalBusinessName || app.contactFirstName + " " + app.contactLastName || "Unnamed Business"}
-                    </div>
+                    <div className="font-medium">{app.legalBusinessName || "Unnamed Business"}</div>
                     <div className="text-xs text-muted-foreground">{app.useOfFunds || "Business Funding"}</div>
                   </div>
                   <div>{formatDate(app.created_at)}</div>
