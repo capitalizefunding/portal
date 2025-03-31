@@ -12,6 +12,7 @@ export default function TableInspectorPage() {
   const [result, setResult] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [columns, setColumns] = useState<string[]>([])
 
   const inspectTable = async () => {
     setIsLoading(true)
@@ -19,19 +20,19 @@ export default function TableInspectorPage() {
     setError("")
 
     try {
-      // Try to get a sample row to determine columns
-      const { data, error } = await supabase.from("applications").select("*").limit(1)
+      // First check if the table exists
+      const { data: tableExists, error: tableError } = await supabase.query(`
+        SELECT EXISTS (
+          SELECT FROM pg_tables
+          WHERE schemaname = 'public'
+          AND tablename = 'applications'
+        );
+      `)
 
-      if (error) {
-        setResult((prev) => prev + "\nError getting sample row: " + JSON.stringify(error))
-      } else if (data && data.length > 0) {
-        const columns = Object.keys(data[0])
-        setResult((prev) => prev + "\nFound columns: " + columns.join(", "))
-
-        // Show sample data
-        setResult((prev) => prev + "\nSample data: " + JSON.stringify(data[0], null, 2))
+      if (tableError) {
+        setResult((prev) => prev + "\nError checking if table exists: " + JSON.stringify(tableError))
       } else {
-        setResult((prev) => prev + "\nTable exists but is empty")
+        setResult((prev) => prev + "\nTable exists check: " + JSON.stringify(tableExists))
       }
 
       // Try to get column information using SQL
@@ -47,9 +48,30 @@ export default function TableInspectorPage() {
           setResult((prev) => prev + "\nError getting column info: " + JSON.stringify(columnError))
         } else {
           setResult((prev) => prev + "\nColumn information: " + JSON.stringify(columnData, null, 2))
+
+          if (columnData && columnData.length > 0) {
+            const foundColumns = columnData.map((col) => col.column_name)
+            setColumns(foundColumns)
+            setResult((prev) => prev + "\n\nColumn names: " + foundColumns.join(", "))
+          }
         }
       } catch (sqlErr) {
         setResult((prev) => prev + "\nException getting column info: " + sqlErr.message)
+      }
+
+      // Try to get a sample row to determine columns
+      const { data, error } = await supabase.from("applications").select("*").limit(1)
+
+      if (error) {
+        setResult((prev) => prev + "\nError getting sample row: " + JSON.stringify(error))
+      } else if (data && data.length > 0) {
+        const sampleColumns = Object.keys(data[0])
+        setResult((prev) => prev + "\n\nFound columns from sample: " + sampleColumns.join(", "))
+
+        // Show sample data
+        setResult((prev) => prev + "\nSample data: " + JSON.stringify(data[0], null, 2))
+      } else {
+        setResult((prev) => prev + "\nTable exists but is empty")
       }
     } catch (err) {
       setError(err.message || "An exception occurred")
@@ -65,31 +87,58 @@ export default function TableInspectorPage() {
     setError("")
 
     try {
-      // Create a test record with the correct column names
-      const testRecord = {
-        // Business Info
-        legalBusinessName: "Test Business " + new Date().toISOString(),
-        dba: "Test DBA",
-        businessAddress: "123 Test St",
-        city: "Test City",
-        state: "TS",
-        zipCode: "12345",
+      if (columns.length === 0) {
+        // If we don't have columns yet, try to get them
+        try {
+          const { data: columnData, error: columnError } = await supabase.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+            AND table_name = 'applications';
+          `)
 
-        // Funding Details
-        amountRequested: "50000",
-        timeframe: "immediate",
-        useOfFunds: "Test Purpose",
-        monthlyRevenue: "100000",
-
-        // Contact Info
-        contactFirstName: "Test",
-        contactLastName: "User",
-        email: "test@example.com",
-        phone: "555-123-4567",
-
-        // Add timestamp
-        created_at: new Date().toISOString(),
+          if (columnError) {
+            setResult((prev) => prev + "\nError getting column info: " + JSON.stringify(columnError))
+          } else if (columnData && columnData.length > 0) {
+            const foundColumns = columnData.map((col) => col.column_name)
+            setColumns(foundColumns)
+            setResult((prev) => prev + "\nFound columns: " + foundColumns.join(", "))
+          }
+        } catch (sqlErr) {
+          setResult((prev) => prev + "\nException getting column info: " + sqlErr.message)
+        }
       }
+
+      // Create a test record with lowercase column names
+      const testRecord = {}
+
+      // Add fields based on the columns we found
+      if (columns.includes("legalbusinessname")) {
+        testRecord["legalbusinessname"] = "Test Business " + new Date().toISOString()
+      } else {
+        // Try different variations
+        testRecord["legalbusinessname"] = "Test Business " + new Date().toISOString()
+      }
+
+      if (columns.includes("amountrequested")) {
+        testRecord["amountrequested"] = "50000"
+      } else {
+        // Try different variations
+        testRecord["amountrequested"] = "50000"
+      }
+
+      if (columns.includes("useoffunds")) {
+        testRecord["useoffunds"] = "Test Purpose"
+      } else {
+        // Try different variations
+        testRecord["useoffunds"] = "Test Purpose"
+      }
+
+      // Contact info
+      testRecord["contactfirstname"] = "Test"
+      testRecord["contactlastname"] = "User"
+      testRecord["email"] = "test@example.com"
+      testRecord["phone"] = "555-123-4567"
 
       setResult((prev) => prev + "\nTest record: " + JSON.stringify(testRecord))
 
@@ -152,6 +201,17 @@ export default function TableInspectorPage() {
               )}
             </Button>
           </div>
+
+          {columns.length > 0 && (
+            <div className="mt-4">
+              <p className="font-medium">Available Columns:</p>
+              <ul className="list-disc pl-5">
+                {columns.map((col, index) => (
+                  <li key={index}>{col}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
 
