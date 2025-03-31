@@ -1,46 +1,46 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button'
 
-export default function DirectInsertTestPage() {
+export default function DirectInsertTest() {
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [message, setMessage] = useState('')
 
-  const handleInsert = async () => {
+  const handleTestInsert = async () => {
     setIsLoading(true)
-    setError(null)
-    setSuccess(false)
+    setMessage('')
 
     try {
-      const { error } = await supabase.from("applications").insert([
+      const { data, error } = await supabase.from('applications').insert([
         {
-          legalBusinessName: "Fake Lead",
-          amountRequested: "50000",
-          status: "pending",
+          legalBusinessName: 'Test Business',
+          amountRequested: '50000',
+          status: 'pending',
+          user_id: (await supabase.auth.getUser()).data.user?.id || '',
         },
       ])
 
-      if (error) throw error
+      if (error) {
+        throw error
+      }
 
-      setSuccess(true)
+      setMessage('Insert successful!')
     } catch (err: any) {
-      setError(err.message)
+      setMessage(err.message || 'Something went wrong.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Direct Insert Test</h1>
-      <Button onClick={handleInsert} disabled={isLoading}>
-        {isLoading ? "Submitting..." : "Insert Test Application"}
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Supabase Direct Insert Test</h1>
+      <Button onClick={handleTestInsert} disabled={isLoading}>
+        {isLoading ? 'Testing...' : 'Run Insert Test'}
       </Button>
-      {success && <p className="text-green-600">Application inserted successfully!</p>}
-      {error && <p className="text-red-600">Error: {error}</p>}
+      {message && <p className="mt-4 text-sm">{message}</p>}
     </div>
   )
 }
