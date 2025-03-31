@@ -21,9 +21,7 @@ export default function SimpleApplicationForm() {
   const [connectionError, setConnectionError] = useState("")
   const [columns, setColumns] = useState<string[]>([])
 
-  // Update the form state and handleSubmit function to use the correct column names
-
-  // Add more form fields to match the table structure
+  // Form fields
   const [businessName, setBusinessName] = useState("")
   const [amount, setAmount] = useState("")
   const [purpose, setPurpose] = useState("")
@@ -69,6 +67,32 @@ export default function SimpleApplicationForm() {
 
       if (error) {
         setDebugInfo((prev) => prev + "\nError getting sample row: " + JSON.stringify(error))
+
+        // Try SQL approach directly
+        try {
+          const { data: columnData, error: columnError } = await supabase.query(`
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+            AND table_name = 'applications';
+          `)
+
+          if (columnError) {
+            setDebugInfo((prev) => prev + "\nError getting column info: " + JSON.stringify(columnError))
+            return
+          }
+
+          if (columnData && columnData.length > 0) {
+            const foundColumns = columnData.map((col) => col.column_name)
+            setColumns(foundColumns)
+            setDebugInfo((prev) => prev + "\nFound columns via SQL: " + foundColumns.join(", "))
+          } else {
+            setDebugInfo((prev) => prev + "\nNo columns found via SQL")
+          }
+        } catch (sqlErr) {
+          setDebugInfo((prev) => prev + "\nException in SQL query: " + sqlErr.message)
+        }
+
         return
       }
 
@@ -138,30 +162,29 @@ export default function SimpleApplicationForm() {
         existingApps.push(newApplication)
         localStorage.setItem("applications", JSON.stringify(existingApps))
         setDebugInfo((prev) => prev + "\nSaved to localStorage successfully")
-      } catch (storageError) {
-        setDebugInfo((prev) => prev + "\nError saving to localStorage: " + storageError.message)
+      } catch (storageErr) {
+        setDebugInfo((prev) => prev + "\nError saving to localStorage: " + storageErr.message)
       }
 
       // Try to save to Supabase using a direct approach
       setDebugInfo((prev) => prev + "\nAttempting to save to Supabase...")
 
-      // Create a properly formatted application object for Supabase with the correct column names
-      const applicationToSave = {
-        // Business Info
-        legalBusinessName: businessName,
+      // Create a properly formatted application object for Supabase with the exact column names
+      // IMPORTANT: Use the exact column names as they appear in the database
+      const applicationToSave = {}
 
-        // Funding Details
-        amountRequested: amount,
-        useOfFunds: purpose,
+      // Add all fields with exact column names
+      applicationToSave["legalbusinessname"] = businessName
+      applicationToSave["amountrequested"] = amount
+      applicationToSave["useoffunds"] = purpose
+      applicationToSave["contactfirstname"] = contactFirstName || "Demo"
+      applicationToSave["contactlastname"] = contactLastName || "User"
+      applicationToSave["email"] = email || "demo@example.com"
+      applicationToSave["phone"] = phone || "555-123-4567"
 
-        // Contact Info
-        contactFirstName: contactFirstName || "Demo",
-        contactLastName: contactLastName || "User",
-        email: email || "demo@example.com",
-        phone: phone || "555-123-4567",
-
-        // Add timestamp
-        created_at: new Date().toISOString(),
+      // Add timestamp if the column exists
+      if (columns.includes("created_at")) {
+        applicationToSave["created_at"] = new Date().toISOString()
       }
 
       setDebugInfo((prev) => prev + "\nFormatted data for Supabase: " + JSON.stringify(applicationToSave))
@@ -172,21 +195,22 @@ export default function SimpleApplicationForm() {
       if (error) {
         setDebugInfo((prev) => prev + "\nSupabase error: " + JSON.stringify(error))
         console.error("Supabase save error:", error)
+        setError("Failed to save application: " + error.message)
       } else {
         setDebugInfo((prev) => prev + "\nSaved to Supabase successfully: " + JSON.stringify(data))
+
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        setIsSubmitting(false)
+        setSuccess(true)
+        setDebugInfo((prev) => prev + "\nForm submission successful")
+
+        // Redirect after showing success message
+        setTimeout(() => {
+          router.push("/dashboard/applications")
+        }, 2000)
       }
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      setIsSubmitting(false)
-      setSuccess(true)
-      setDebugInfo((prev) => prev + "\nForm submission successful")
-
-      // Redirect after showing success message
-      setTimeout(() => {
-        router.push("/dashboard/applications")
-      }, 2000)
     } catch (err) {
       const errorMessage = err.message || "An unknown error occurred"
       console.error("Form submission error:", err)
